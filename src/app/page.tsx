@@ -67,11 +67,14 @@ export default function Home() {
         </div>
 
         {/* Randomise Button */}
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
+          {!embedToken && (
+            <p className="text-xs text-zinc-400">Waiting for Terminal AI session...</p>
+          )}
           <Button
             size="lg"
             onClick={handleRandomise}
-            disabled={loading}
+            disabled={loading || !embedToken}
             className="px-8 text-base font-semibold"
           >
             {loading ? (
