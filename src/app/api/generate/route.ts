@@ -1,51 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-
-const GATEWAY_URL = process.env.TERMINAL_AI_GATEWAY_URL;
+import { callGateway } from "@/lib/terminal-ai";
 
 export async function POST(request: NextRequest) {
-  if (!GATEWAY_URL) {
-    return NextResponse.json(
-      { error: "Gateway not configured" },
-      { status: 500 }
-    );
-  }
+  const body = (await request.json()) as { embedToken?: string };
+  const { embedToken } = body;
 
-  const embedToken = request.headers.get("x-embed-token");
   if (!embedToken) {
-    return NextResponse.json(
-      { error: "Missing embed token" },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "Missing embed token" }, { status: 401 });
   }
 
-  const res = await fetch(`${GATEWAY_URL}/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${embedToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-3-5-haiku",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You generate creative, fun pet names. Respond ONLY with valid JSON — no markdown, no code fences. Return exactly this format: {\"names\":[{\"name\":\"...\",\"explanation\":\"...\"},{\"name\":\"...\",\"explanation\":\"...\"},{\"name\":\"...\",\"explanation\":\"...\"}]} Each explanation should be a witty one-liner (under 15 words). Be creative, playful, and varied — mix cute, funny, regal, and punny names.",
-        },
-        {
-          role: "user",
-          content: "Generate 3 unique and creative pet names with fun explanations.",
-        },
-      ],
-      max_tokens: 300,
-    }),
-  });
+  const res = await callGateway(
+    [
+      {
+        role: "system",
+        content:
+          "You generate creative, fun pet names. Respond ONLY with valid JSON — no markdown, no code fences. Return exactly this format: {\"names\":[{\"name\":\"...\",\"explanation\":\"...\"},{\"name\":\"...\",\"explanation\":\"...\"},{\"name\":\"...\",\"explanation\":\"...\"}]} Each explanation should be a witty one-liner (under 15 words). Be creative, playful, and varied — mix cute, funny, regal, and punny names.",
+      },
+      {
+        role: "user",
+        content:
+          "Generate 3 unique and creative pet names with fun explanations.",
+      },
+    ],
+    embedToken,
+  );
 
   if (!res.ok) {
     const errorText = await res.text();
     return NextResponse.json(
       { error: `Gateway error: ${res.status}`, details: errorText },
-      { status: res.status }
+      { status: res.status },
     );
   }
 
@@ -55,7 +39,7 @@ export async function POST(request: NextRequest) {
   if (!content) {
     return NextResponse.json(
       { error: "No response from model" },
-      { status: 502 }
+      { status: 502 },
     );
   }
 
@@ -65,7 +49,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: "Failed to parse model response", raw: content },
-      { status: 502 }
+      { status: 502 },
     );
   }
 }

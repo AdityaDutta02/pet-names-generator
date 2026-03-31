@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useEmbedToken } from "@/hooks/use-embed-token";
 
 interface PetName {
   name: string;
@@ -17,6 +18,7 @@ function getRandomEmoji() {
 }
 
 export default function Home() {
+  const embedToken = useEmbedToken();
   const [names, setNames] = useState<PetName[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,17 +29,10 @@ export default function Home() {
     setError(null);
 
     try {
-      const tokenMeta = document.querySelector<HTMLMetaElement>(
-        'meta[name="terminal-ai-token"]'
-      );
-      const embedToken = tokenMeta?.content ?? "";
-
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-embed-token": embedToken,
-        },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedToken }),
       });
 
       if (!res.ok) {
