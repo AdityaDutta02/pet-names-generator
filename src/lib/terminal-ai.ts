@@ -1,5 +1,3 @@
-import config from '../../terminal-ai.config.json'
-
 const GATEWAY_URL = process.env.TERMINAL_AI_GATEWAY_URL!
 
 export async function callGateway(
@@ -13,7 +11,7 @@ export async function callGateway(
       Authorization: `Bearer ${embedToken}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ model: config.model_tier, messages }),
+    body: JSON.stringify({ model: 'claude-3-5-haiku', messages }),
   })
   if (res.status === 401) {
     throw Object.assign(new Error('Gateway 401: token expired or invalid'), { code: 'TOKEN_EXPIRED' })
